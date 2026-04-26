@@ -20,6 +20,7 @@ import { BubbleMenuToolbar } from './components/BubbleMenu'
 import { FindReplaceBar } from './components/FindReplaceBar'
 import { DiffToolbar } from './components/DiffToolbar'
 import { CommentsPanel } from './components/CommentsPanel'
+import { WidthToggle } from './components/WidthToggle'
 
 // Extensions
 import { CustomParagraph } from './extensions/CustomParagraph'
@@ -413,6 +414,7 @@ export function Editor({ initialContent = '', filename = 'untitled.md' }: Editor
 
   return (
     <div id="editor-wrapper">
+      <WidthToggle />
       <DiffToolbar editor={editor} onAccept={handleAcceptAllDiff} onReject={handleRejectAllDiff} />
       <FindReplaceBar editor={editor} />
       <BlockHandle editor={editor} />
