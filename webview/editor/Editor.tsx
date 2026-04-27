@@ -12,6 +12,7 @@ import TableCell from '@tiptap/extension-table-cell'
 import { Markdown } from 'tiptap-markdown'
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { validateMarkdown } from '../../shared/validateMarkdown'
+import { splitFrontmatter, joinFrontmatter } from './utils/frontmatter'
 
 // Components
 import { BlockHandle } from './components/BlockHandle'
@@ -90,6 +91,9 @@ export function Editor({ initialContent = '', filename = 'untitled.md' }: Editor
   const isUpdatingFromExtension = useRef(false)
   const updateTimeout = useRef<number | null>(null)
   const lastKnownContent = useRef(initialContent)
+  // YAML frontmatter is stripped before content reaches the editor and re-attached
+  // verbatim on save; tiptap parses `---` as a thematic break, which would corrupt it.
+  const frontmatterRef = useRef<string>('')
   const [comments, setComments] = useState<ParsedComment[]>([])
 
   console.log('[PM Toolkit] About to call useEditor')
@@ -152,7 +156,9 @@ export function Editor({ initialContent = '', filename = 'untitled.md' }: Editor
       }
 
       updateTimeout.current = window.setTimeout(() => {
-        const markdown = editor.storage.markdown.getMarkdown()
+        const body = editor.storage.markdown.getMarkdown()
+        // Re-attach frontmatter (if any) before validation/persistence.
+        const markdown = joinFrontmatter(frontmatterRef.current, body)
 
         const validation = validateMarkdown(markdown)
         if (!validation.valid) {
@@ -187,11 +193,15 @@ export function Editor({ initialContent = '', filename = 'untitled.md' }: Editor
             isUpdatingFromExtension.current = true
             lastKnownContent.current = content
 
+            // Strip YAML frontmatter; keep it verbatim in the ref for round-tripping.
+            const { frontmatter, body } = splitFrontmatter(content)
+            frontmatterRef.current = frontmatter
+
             // Update comments panel from the incoming markdown
-            setComments(parseCommentsFromMarkdown(content))
+            setComments(parseCommentsFromMarkdown(body))
 
             // Preprocess comment syntax → HTML so Tiptap's HTML parser picks it up
-            const commentProcessed = preprocessCommentsToHtml(content)
+            const commentProcessed = preprocessCommentsToHtml(body)
 
             // Preprocess mermaid blocks to protect them from double-parsing
             const processedContent = preprocessMermaidBlocks(commentProcessed)
@@ -357,7 +367,9 @@ export function Editor({ initialContent = '', filename = 'untitled.md' }: Editor
       lastKnownContent.current = updated
       setComments(parseCommentsFromMarkdown(updated))
       isUpdatingFromExtension.current = true
-      const commentProcessed = preprocessCommentsToHtml(updated)
+      // Strip frontmatter before feeding back into the editor so it stays untouched.
+      const { body: updatedBody } = splitFrontmatter(updated)
+      const commentProcessed = preprocessCommentsToHtml(updatedBody)
       const processedContent = preprocessMermaidBlocks(commentProcessed)
       editor
         .chain()
@@ -396,7 +408,9 @@ export function Editor({ initialContent = '', filename = 'untitled.md' }: Editor
       lastKnownContent.current = updated
       setComments(parseCommentsFromMarkdown(updated))
       isUpdatingFromExtension.current = true
-      const commentProcessed = preprocessCommentsToHtml(updated)
+      // Strip frontmatter before feeding back into the editor so it stays untouched.
+      const { body: updatedBody } = splitFrontmatter(updated)
+      const commentProcessed = preprocessCommentsToHtml(updatedBody)
       const processedContent = preprocessMermaidBlocks(commentProcessed)
       editor
         .chain()
