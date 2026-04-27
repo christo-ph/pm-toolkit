@@ -36,7 +36,7 @@ export function WidthToggle() {
   return (
     <button
       type="button"
-      className="width-toggle"
+      className="editor-floating-btn"
       onClick={toggle}
       title={fullWidth ? 'Switch to default width' : 'Switch to full width'}
       aria-label={fullWidth ? 'Switch to default width' : 'Switch to full width'}

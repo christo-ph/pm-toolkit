@@ -21,6 +21,7 @@ import { FindReplaceBar } from './components/FindReplaceBar'
 import { DiffToolbar } from './components/DiffToolbar'
 import { CommentsPanel } from './components/CommentsPanel'
 import { WidthToggle } from './components/WidthToggle'
+import { SourceToggle } from './components/SourceToggle'
 
 // Extensions
 import { CustomParagraph } from './extensions/CustomParagraph'
@@ -414,7 +415,10 @@ export function Editor({ initialContent = '', filename = 'untitled.md' }: Editor
 
   return (
     <div id="editor-wrapper">
-      <WidthToggle />
+      <div className="editor-floating-toolbar">
+        <SourceToggle />
+        <WidthToggle />
+      </div>
       <DiffToolbar editor={editor} onAccept={handleAcceptAllDiff} onReject={handleRejectAllDiff} />
       <FindReplaceBar editor={editor} />
       <BlockHandle editor={editor} />

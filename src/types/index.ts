@@ -59,7 +59,8 @@ export type WebviewToExtensionMessage =
   | { type: 'exportHtml'; html: string }
   | { type: 'findBarOpen'; open: boolean }
   | { type: 'acceptAllDiff' }
-  | { type: 'rejectAllDiff' };
+  | { type: 'rejectAllDiff' }
+  | { type: 'openSourceView' };
 
 /**
  * Template definition from YAML frontmatter

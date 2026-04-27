@@ -470,6 +470,21 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
             await exportToHtml(document, message.html);
             break;
 
+          case 'openSourceView':
+            // Reopen the current document in the default text editor
+            // (raw markdown source) beside the WYSIWYG view.
+            try {
+              await vscode.commands.executeCommand(
+                'vscode.openWith',
+                document.uri,
+                'default',
+                { viewColumn: vscode.ViewColumn.Beside }
+              );
+            } catch (err) {
+              console.error('Failed to open source view:', err);
+            }
+            break;
+
           case 'findBarOpen':
             vscode.commands.executeCommand('setContext', 'pmtoolkit.findBarOpen', message.open);
             break;
