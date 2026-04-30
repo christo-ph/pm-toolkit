@@ -5,11 +5,22 @@ All notable changes to PM Toolkit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.10.1] - 2026-04-27
+## [0.11.0] - 2026-04-28
 
 ### Fixed
 
 - **YAML frontmatter preservation** — Files with `---\nkey: value\n---` headers no longer have the frontmatter parsed as horizontal rules and corrupted on save. The block is stripped before the editor sees it and re-attached verbatim on persistence.
+- **Find: page now scrolls to active match** — Pressing Enter / ↓ / ↑ (or typing a new query) now reliably scrolls the editor to the active match. ProseMirror's built-in `scrollIntoView` is unreliable while focus lives on the find input, so we scroll the active decoration's DOM node directly via `requestAnimationFrame`.
+- **Find: subtler highlight that reads in dark mode** — Soft yellow background for matches with a slightly stronger fill plus thin amber outline for the active match. Works against both light and dark editor backgrounds.
+- **Find: Cmd/Ctrl+F refocuses the input when bar is already open** — Previously the keybinding was gated off whenever the find bar was visible, so pressing Cmd+F again did nothing. It now always focuses the find input and selects its current value, so you can immediately retype a new query.
+- **Diff views no longer hijacked by PM Toolkit** — Any non-`file://` URI (git/gitlens/SCM/local-history diff and preview schemes) is rejected by the markdown editor provider and re-opened with the default text editor. Combined with `configurationDefaults` for `workbench.editorAssociations`, SCM "Open Changes" and similar flows now show a real text diff. Normal `file://` opens still default to PM Toolkit.
+- **Copying from a table cell now yields plain text** — Previously copying selected text inside a table cell pasted as raw `<table>...<td>...</td></table>` HTML markup into code editors and terminals. The plain-text clipboard payload is now the slice's text content (with newline separators between blocks), so pasting outside the editor gives the actual cell text. Rich HTML paste into Word/Notion is unchanged.
+- **Text selection visible in dark mode** — The selection background previously used the accent link color at 15% opacity, which washed out against dark editor backgrounds. It now uses VS Code's `editor.selectionBackground` token, so selection contrast tracks the active theme.
+- **Links are clickable again** — When the editor migrated to React, the link-click handler was lost: clicking `<a>` tags did nothing. Clicks now route through the extension host: `#anchor` links scroll to the matching heading inside the document; relative paths (e.g. `./other.md`) open beside the current editor; external URLs open in the system browser.
+
+### Changed
+
+- **Cmd/Ctrl+A in a table cell selects the cell first** — First press selects the current cell's contents; pressing again escalates to selecting the whole document. Matches the cell-aware behavior of Notion / Google Docs.
 
 ## [0.10.0] - 2026-04-27
 

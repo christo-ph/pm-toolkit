@@ -2,7 +2,7 @@
   "name": "pm-toolkit-christo-ph",
   "displayName": "PM Toolkit (christo-ph)",
   "description": "Visual markdown editor, kanban boards, and file viewers — right where you code. Personal fork with width toggle.",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "publisher": "christo-ph",
   "license": "MIT",
   "icon": "images/pm-toolkit-icon-light.png",
