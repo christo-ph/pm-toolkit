@@ -358,6 +358,10 @@ function exitTableInsertBelow(editor: any): boolean {
 export const KeyboardNavigation = Extension.create({
   name: 'keyboardNavigation',
 
+  // Run before StarterKit's built-ins (default priority 100) so our
+  // table-aware Mod-A and other shortcuts intercept first.
+  priority: 1000,
+
   addKeyboardShortcuts() {
     return {
       // Home key - move to start of current line/block
@@ -530,6 +534,71 @@ export const KeyboardNavigation = Extension.create({
     const editor = this.editor;
 
     return [
+      // DOM-level Mod-A handler in the capture phase. We tried the higher
+      // tiptap shortcut layers and a raw ProseMirror keymap plugin, but
+      // @tiptap/core's built-in Keymap extension reliably wins over both.
+      // Capturing keydown on the editor's DOM is the only way to
+      // pre-empt that without forking core. We only intervene when the
+      // cursor is inside a table cell — outside cells the event passes
+      // through untouched and the default selectAll behavior runs.
+      new Plugin({
+        key: new PluginKey('tableCellSelectAll'),
+        view(editorView) {
+          const handler = (event: KeyboardEvent) => {
+            const isModA =
+              (event.metaKey || event.ctrlKey) &&
+              !event.shiftKey &&
+              !event.altKey &&
+              event.key.toLowerCase() === 'a';
+            if (!isModA) return;
+
+            const { state } = editorView;
+            const { selection } = state;
+            const { $from } = selection;
+
+            let cellDepth = -1;
+            for (let depth = $from.depth; depth > 0; depth--) {
+              const node = $from.node(depth);
+              if (
+                node.type.name === 'tableCell' ||
+                node.type.name === 'tableHeader'
+              ) {
+                cellDepth = depth;
+                break;
+              }
+            }
+            if (cellDepth === -1) return;
+
+            const cellStart = $from.start(cellDepth);
+            const cellEnd = $from.end(cellDepth);
+
+            // Already fully selected → escalate to whole-document selectAll
+            // by leaving the event for the default handler.
+            if (
+              selection instanceof TextSelection &&
+              selection.from === cellStart &&
+              selection.to === cellEnd
+            ) {
+              return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            editorView.dispatch(
+              state.tr.setSelection(
+                TextSelection.create(state.doc, cellStart, cellEnd)
+              )
+            );
+          };
+          editorView.dom.addEventListener('keydown', handler, true);
+          return {
+            destroy() {
+              editorView.dom.removeEventListener('keydown', handler, true);
+            },
+          };
+        },
+      }),
+
       new Plugin({
         key: new PluginKey('gapClickHandler'),
         props: {

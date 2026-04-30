@@ -737,8 +737,15 @@ html, body {
 
 /* ===== Selection ===== */
 
+/* Use VS Code's own editor selection color so contrast works correctly in
+   both light and dark themes. The previous accent-at-15% washed out against
+   dark backgrounds. Fallback uses 35% accent for environments that don't
+   expose the selection token. */
 .ProseMirror ::selection {
-  background-color: var(--pmtoolkit-accent-bg);
+  background-color: var(
+    --vscode-editor-selectionBackground,
+    color-mix(in srgb, var(--pmtoolkit-accent) 35%, transparent)
+  );
 }
 
 .ProseMirror .ProseMirror-selectednode {
@@ -1867,14 +1874,19 @@ html, body {
   min-width: 60px;
 }
 
+/* Find/replace match highlights — subtle yellow, works in both themes.
+   Theme variables are intentionally NOT used as the primary source: they
+   resolve inconsistently in webviews and often produce zero contrast
+   between regular and active matches. */
 .pm-find-match {
-  background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));
+  background: rgba(255, 213, 79, 0.22);
   border-radius: 2px;
 }
 
 .pm-find-match-active {
-  background: var(--vscode-editor-findMatchBackground, rgba(246, 185, 77, 0.7));
+  background: rgba(255, 213, 79, 0.55);
   border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 170, 0, 0.9);
 }
 
 .pm-find-bar button {

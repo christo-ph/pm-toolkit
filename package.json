@@ -123,6 +123,15 @@
         "priority": "default"
       }
     ],
+    "configurationDefaults": {
+      "workbench.editorAssociations": {
+        "git:/**/*.md": "default",
+        "gitlens:/**/*.md": "default",
+        "git-graph:/**/*.md": "default",
+        "vscode-scm:/**/*.md": "default",
+        "vscode-local-history:/**/*.md": "default"
+      }
+    },
     "commands": [
       {
         "command": "pmtoolkit.newKanbanBoard",
@@ -189,7 +198,7 @@
         "key": "ctrl+f",
         "mac": "cmd+f",
         "command": "pmtoolkit.find",
-        "when": "activeCustomEditorId == 'pmtoolkit.markdownEditor' && !pmtoolkit.findBarOpen"
+        "when": "activeCustomEditorId == 'pmtoolkit.markdownEditor'"
       },
       {
         "key": "ctrl+h",

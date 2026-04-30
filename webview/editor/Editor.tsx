@@ -146,6 +146,18 @@ export function Editor({ initialContent = '', filename = 'untitled.md' }: Editor
       AiDiff,
       CommentMark,
     ],
+    editorProps: {
+      // Override the plain-text clipboard payload. Tiptap's default emits
+      // serialized HTML for partial selections inside structured nodes
+      // (notably table cells), so pasting into a code editor or terminal
+      // produced raw `<table>...<td>...</td></table>` markup. Replacing it
+      // with the slice's textContent gives users the actual cell text and
+      // preserves block boundaries with newlines for multi-paragraph
+      // selections. The HTML clipboard payload is unaffected, so rich-paste
+      // into Word/Notion still works.
+      clipboardTextSerializer: (slice) =>
+        slice.content.textBetween(0, slice.content.size, '\n'),
+    },
     content: initialContent,
     onUpdate: ({ editor }) => {
       if (isUpdatingFromExtension.current) return
@@ -325,6 +337,57 @@ export function Editor({ initialContent = '', filename = 'untitled.md' }: Editor
       window.removeEventListener('message', handleMessage)
       delete window._getEditorContent
     }
+  }, [editor])
+
+  // Handle clicks on links inside the editor.
+  // Tiptap's Link extension is configured with `openOnClick: false` so we can
+  // route everything through the extension host (relative paths, external URLs)
+  // and handle in-document anchors (#heading) ourselves by scrolling.
+  useEffect(() => {
+    if (!editor) return
+
+    const slugify = (text: string): string =>
+      text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+
+    const scrollToAnchor = (slug: string): boolean => {
+      const decoded = decodeURIComponent(slug).toLowerCase()
+      const headings = editor.view.dom.querySelectorAll('h1, h2, h3, h4, h5, h6')
+      for (const el of Array.from(headings)) {
+        if (slugify(el.textContent || '') === decoded) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          return true
+        }
+      }
+      return false
+    }
+
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null
+      const link = target?.closest('a')
+      if (!link) return
+      const href = link.getAttribute('href')
+      if (!href) return
+
+      e.preventDefault()
+
+      if (href.startsWith('#')) {
+        scrollToAnchor(href.slice(1))
+        return
+      }
+
+      // Strip in-document fragment from relative paths; the extension opens the
+      // file in VS Code's default editor which doesn't act on URL fragments.
+      const path = href.replace(/#.*$/, '')
+      getVSCode().postMessage({ type: 'openFile', payload: { path: path || href } })
+    }
+
+    const dom = editor.view.dom
+    dom.addEventListener('click', onClick)
+    return () => dom.removeEventListener('click', onClick)
   }, [editor])
 
   console.log('[PM Toolkit] editor instance:', editor ? 'created' : 'null')

@@ -146,6 +146,16 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
+    // Bail out for non-file URIs (git/gitlens/SCM/local-history diff views).
+    // The WYSIWYG editor only makes sense for editable working-copy files;
+    // diff and history previews should fall through to the plain text editor.
+    const scheme = document.uri.scheme;
+    if (scheme !== 'file' && scheme !== 'untitled') {
+      webviewPanel.dispose();
+      await vscode.commands.executeCommand('vscode.openWith', document.uri, 'default');
+      return;
+    }
+
     // Track this editor panel and document
     MarkdownEditorProvider.activeEditors.set(document.uri.toString(), webviewPanel);
     MarkdownEditorProvider.activeDocuments.set(document.uri.toString(), document);

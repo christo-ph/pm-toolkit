@@ -42,18 +42,30 @@ export function FindReplaceBar({ editor }: FindReplaceBarProps) {
 
   // Listen for open-find / open-find-replace custom events
   useEffect(() => {
+    // Focus + select-all so a re-trigger of Cmd/Ctrl+F while the bar is
+    // already open jumps focus back to the input and lets the user immediately
+    // type a new query without manually clearing the previous one.
+    const focusFindInput = () => {
+      setTimeout(() => {
+        const el = findInputRef.current;
+        if (!el) return;
+        el.focus();
+        el.select();
+      }, 50);
+    };
+
     const handleOpenFind = () => {
       setIsOpen(true);
       setShowReplace(false);
       editor.commands.openFind();
-      setTimeout(() => findInputRef.current?.focus(), 50);
+      focusFindInput();
     };
 
     const handleOpenFindReplace = () => {
       setIsOpen(true);
       setShowReplace(true);
       editor.commands.openFindReplace();
-      setTimeout(() => findInputRef.current?.focus(), 50);
+      focusFindInput();
     };
 
     window.addEventListener('open-find', handleOpenFind);

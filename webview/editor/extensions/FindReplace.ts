@@ -49,6 +49,22 @@ declare module '@tiptap/core' {
   }
 }
 
+/**
+ * Scroll the currently-active match decoration into view. ProseMirror's
+ * `tr.scrollIntoView()` only fires reliably when the editor itself has
+ * focus; when focus lives on the find input (the common case) the document
+ * doesn't move. We therefore find the active decoration in the DOM after
+ * React has re-rendered and call scrollIntoView on the element directly.
+ */
+function scrollActiveMatchIntoView(): void {
+  requestAnimationFrame(() => {
+    const el = document.querySelector('.pm-find-match-active');
+    if (el) {
+      el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+    }
+  });
+}
+
 function findMatches(doc: ProseMirrorNode, query: string): { from: number; to: number }[] {
   if (!query) return [];
   const matches: { from: number; to: number }[] = [];
@@ -157,6 +173,7 @@ export const FindReplace = Extension.create({
           if (dispatch) {
             tr.setMeta(findReplaceKey, { query, activeIndex: 0 });
             dispatch(tr);
+            scrollActiveMatchIntoView();
           }
           return true;
         },
@@ -178,6 +195,7 @@ export const FindReplace = Extension.create({
               tr.scrollIntoView();
             }
             dispatch(tr);
+            scrollActiveMatchIntoView();
           }
           return true;
         },
@@ -199,6 +217,7 @@ export const FindReplace = Extension.create({
               tr.scrollIntoView();
             }
             dispatch(tr);
+            scrollActiveMatchIntoView();
           }
           return true;
         },
